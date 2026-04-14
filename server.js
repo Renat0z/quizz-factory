@@ -588,7 +588,8 @@ const distPath = join(__dirname, 'dist');
 if (existsSync(distPath)) {
   app.use(express.static(distPath));
   // SPA fallback — rotas do React Router
-  app.get('*', (req, res) => {
+  // Express 5 não aceita '*' sem nome; regex funciona em v4 e v5
+  app.get(/(.*)/, (req, res) => {
     res.sendFile(join(distPath, 'index.html'));
   });
 }
