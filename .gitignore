@@ -1,6 +1,30 @@
+# Dependências
 node_modules/
+
+# Build
 dist/
+
+# Variáveis de ambiente — NUNCA subir
 .env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Testes
 test-results/
+coverage/
+playwright-report/
+
+# Arquivos temporários de debug
+test_server.js
+
+# Editores
 .vscode/
+.idea/
+
+# OS
 .DS_Store
+Thumbs.db

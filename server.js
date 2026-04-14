@@ -4,8 +4,10 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import postgres from 'postgres';
 import { createHash } from 'crypto';
+import Groq, { toFile } from 'groq-sdk';
 
 const app = express();
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // postgres.js retorna JSONB como objeto JS, mas em alguns casos (e no api/index.js)
 // pode chegar como string — este helper garante sempre o tipo correto
@@ -544,8 +546,39 @@ app.get('/api/admin/quizzes/:id/export', authMiddleware, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// Transcription (Groq Whisper)
+// ---------------------------------------------------------------------------
+app.post('/api/transcribe', async (req, res) => {
+  try {
+    if (!req.body || !req.body.audio) {
+      return res.status(400).json({ error: 'No audio data provided' });
+    }
+    if (!process.env.GROQ_API_KEY) {
+      return res.status(500).json({ error: 'GROQ_API_KEY not configured' });
+    }
+
+    const { audio, filename, mimeType } = req.body;
+    const buffer = Buffer.from(audio, 'base64');
+    const file = await toFile(buffer, filename || 'audio.webm', { type: mimeType || 'audio/webm' });
+
+    const transcription = await groq.audio.transcriptions.create({
+      file,
+      model: 'whisper-large-v3',
+      language: 'pt',
+      response_format: 'json',
+    });
+
+    res.json({ transcription: transcription.text });
+  } catch (error) {
+    res.status(500).json({ error: 'Transcription failed: ' + error.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Start
 // ---------------------------------------------------------------------------
 app.listen(PORT, () => {
-  console.log(`Quiz Factory API rodando em http://localhost:${PORT}`);
+  console.log(`\n🚀 Quiz Factory API rodando em http://localhost:${PORT}`);
+  console.log(`   GROQ_API_KEY: ${process.env.GROQ_API_KEY ? '✅ configurada' : '❌ AUSENTE'}`);
+  console.log(`   POST /api/transcribe: ✅ registrada\n`);
 });

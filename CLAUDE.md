@@ -6,12 +6,40 @@ React 18 + Vite (frontend), Express (dev) e Vercel Serverless (produção). Post
 
 ## Arquitetura: Clean Architecture + Factory Method
 
+> **Árvore semântica completa, mapa de dependências e guia "onde mudo X?":**
+> `.claude/architecture.md` — leia este arquivo antes de qualquer mudança estrutural.
+
 ```
 src/core/           → Domínio puro (entidades, use cases) — sem React, sem DB
 src/infrastructure/ → Implementações concretas (API HTTP client)
 src/presentation/   → React (pages, components, hooks)
-api/                → Backend Express/Serverless
+api/                → Backend Express/Serverless (paridade obrigatória com server.js)
 db/                 → Schema, migrations, seed
+```
+
+### Entry points por URL
+| URL | Componente | Arquivo |
+|---|---|---|
+| `/` | HomePage | `src/presentation/pages/HomePage.jsx` |
+| `/:slug` | QuizPage → QuizPlayer | `src/presentation/pages/QuizPage.jsx` |
+| `/admin/*` | AdminApp | `src/presentation/pages/admin/AdminApp.jsx` |
+| `/admin/quizzes/:id/edit` | QuizBuilderPage | `src/presentation/pages/admin/QuizBuilderPage.jsx` |
+| `/admin/quizzes/:id/analytics` | AnalyticsPage | `src/presentation/pages/admin/AnalyticsPage.jsx` |
+| `/admin/quizzes/:id/responses` | ResponsesPage | `src/presentation/pages/admin/ResponsesPage.jsx` |
+
+### Fluxo crítico: responder quiz
+```
+QuizPage → useQuiz → QuizApiRepository → GET /api/quizzes/:slug
+QuizPage → QuizPlayer → useQuizSession → SessionApiRepository → POST/PUT /api/sessions/*
+QuizPlayer → QuestionFactory → [tipo correto] (OCP — nunca modificar QuizPlayer para novo tipo)
+```
+
+### Fluxo crítico: transcrição de áudio
+```
+TextQuestion / LongTextQuestion → RecordButton
+RecordButton → POST /api/transcribe (Vite proxy → Express 3001)
+server.js / api/index.js → Groq Whisper (whisper-large-v3, language: pt)
+GROQ_API_KEY obrigatória no .env
 ```
 
 ## Regras obrigatórias
@@ -134,3 +162,33 @@ npm run build        # Build Vite para dist/
 - `GET  /api/admin/quizzes/:id/sessions`
 - `GET  /api/admin/quizzes/:id/analytics`
 - `GET  /api/admin/quizzes/:id/export`  → CSV download
+
+### Transcrição de áudio
+- `POST /api/transcribe` → Groq Whisper (público, sem auth)
+
+---
+
+## Componentes-chave e responsabilidades
+
+| Arquivo | Responsabilidade única |
+|---|---|
+| `QuizPlayer.jsx` | Orquestrador do player — layout, animações, auto-avanço. NÃO conhece tipos de pergunta. |
+| `useQuizSession.js` | TODO o estado de sessão: steps, answers, analytics, branching, submit, resume. |
+| `QuestionFactory.jsx` | Registry `type → Component`. Também expõe `getAvailableTypes()` para o builder. |
+| `ThemeProvider.jsx` | Injeta CSS vars (`--color-primary` etc.) no root. Zero prop-drilling de tema. |
+| `SessionApiRepository.js` | 4 métodos HTTP para sessão. `saveEvent` é fire-and-forget. |
+| `QuizApiRepository.js` | 2 métodos: `listPublished()` e `getBySlug()`. |
+| `RecordButton.jsx` | Grava áudio via MediaRecorder, converte para base64, envia para `/api/transcribe`. |
+| `core/entities/Question.js` | `isAnswerValid()`, `serializeAnswer()`, `calcOrderKey()` — lógica pura sem React. |
+| `core/entities/Quiz.js` | `DEFAULT_THEME`, `resolveTheme()`, `slugify()` — lógica pura sem React. |
+
+---
+
+## Gotchas e armadilhas conhecidas
+
+- **Express 5**: não usar `app._router.stack` — router é lazy, quebra no callback do `listen()`
+- **Processo stale**: Node não recarrega arquivo em disco. Sempre reiniciar `npm run dev` após editar `server.js`
+- **Paridade obrigatória**: toda rota nova em `server.js` deve ser replicada em `api/index.js`
+- **Admin sem repositório**: páginas admin fazem `fetch` direto (sem `AdminApiRepository`) — ao adicionar rota admin, replicar o padrão existente nas 4 páginas
+- **QuizBuilderPage é god component** (639 linhas): `SortableQuestion` e lógica de fetch estão inline — cuidado ao editar
+- **`SubmitSession.js` não é usado**: o submit vai por `useQuizSession → SessionApiRepository.completeSession()` direto
