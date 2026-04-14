@@ -1,0 +1,35 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://quizz:quizz@db:5432/quizz_factory
+      JWT_SECRET: ${JWT_SECRET:-quizz_factory_secret_2026}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      PORT: 3001
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: quizz
+      POSTGRES_PASSWORD: quizz
+      POSTGRES_DB: quizz_factory
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # schema.sql é executado automaticamente na primeira inicialização
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      # para seed: docker compose exec app node --env-file=.env db/seed.js
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quizz -d quizz_factory"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

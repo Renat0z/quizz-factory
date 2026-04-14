@@ -575,6 +575,25 @@ app.post('/api/transcribe', async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// Static (produção / Docker) — serve o build do Vite e SPA fallback
+// Em dev o Vite roda separado; em produção tudo sai do Express.
+// ---------------------------------------------------------------------------
+import { existsSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const distPath = join(__dirname, 'dist');
+
+if (existsSync(distPath)) {
+  app.use(express.static(distPath));
+  // SPA fallback — rotas do React Router
+  app.get('*', (req, res) => {
+    res.sendFile(join(distPath, 'index.html'));
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Start
 // ---------------------------------------------------------------------------
 app.listen(PORT, () => {

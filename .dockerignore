@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env
+.env.*
+.git/
+.claude/
+coverage/
+test-results/
+playwright-report/
+test_server.js
+*.log
+.DS_Store
+Thumbs.db
