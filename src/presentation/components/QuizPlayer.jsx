@@ -6,6 +6,7 @@ import { NavButtons } from './NavButtons';
 import { QuestionFactory } from './question-types/QuestionFactory';
 import { useQuizSession } from '../hooks/useQuizSession';
 import { resolveTheme } from '../../core/entities/Quiz';
+import { RichText } from './RichText';
 
 /**
  * QuizPlayer — orquestrador do player de quiz.
@@ -170,13 +171,13 @@ export function QuizPlayer({ quiz, isPreview = false }) {
                 )}
               </h1>
 
-              {currentQuestion.description && (
-                <p
-                  className="text-lg mb-8 leading-relaxed"
+              {currentQuestion.description && currentQuestion.type !== 'welcome' && (
+                <div
+                  className="text-lg mb-8"
                   style={{ color: theme.muted }}
                 >
-                  {currentQuestion.description}
-                </p>
+                  <RichText content={currentQuestion.description} />
+                </div>
               )}
 
               <div className="space-y-4">

@@ -7,6 +7,7 @@ import QuizListPage from './QuizListPage';
 import QuizBuilderPage from './QuizBuilderPage';
 import AnalyticsPage from './AnalyticsPage';
 import ResponsesPage from './ResponsesPage';
+import EvaluationPage from './EvaluationPage';
 
 function isTokenValid(token) {
   if (!token) return false;
@@ -45,6 +46,7 @@ export default function AdminApp() {
         <Route path="quizzes/:id/edit" element={<QuizBuilderPage token={token} />} />
         <Route path="quizzes/:id/analytics" element={<AnalyticsPage token={token} />} />
         <Route path="quizzes/:id/responses" element={<ResponsesPage token={token} />} />
+        <Route path="quizzes/:id/evaluation" element={<EvaluationPage token={token} />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Routes>
     </AdminLayout>

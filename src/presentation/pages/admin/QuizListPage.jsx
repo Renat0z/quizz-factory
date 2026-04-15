@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Edit2, BarChart2, Trash2, Globe, EyeOff, Loader2 } from 'lucide-react';
+import { Plus, Edit2, BarChart2, BarChart3, Users, Trash2, Globe, EyeOff, Loader2 } from 'lucide-react';
 
 export default function QuizListPage({ token }) {
   const [quizzes, setQuizzes] = useState([]);
@@ -103,6 +103,22 @@ export default function QuizListPage({ token }) {
                 >
                   <BarChart2 size={16} />
                 </Link>
+                <Link
+                  to={`/admin/quizzes/${quiz.id}/responses`}
+                  className="p-2.5 rounded-xl bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700 transition-colors"
+                  title="Respostas"
+                >
+                  <Users size={16} />
+                </Link>
+                {quiz.config?.evaluationMode && (
+                  <Link
+                    to={`/admin/quizzes/${quiz.id}/evaluation`}
+                    className="p-2.5 rounded-xl bg-brand/15 text-brand hover:bg-brand/30 transition-colors"
+                    title="Avaliação de candidatos"
+                  >
+                    <BarChart3 size={16} />
+                  </Link>
+                )}
                 <button
                   onClick={() => togglePublish(quiz)}
                   className={`p-2.5 rounded-xl transition-colors ${

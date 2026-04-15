@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { ArrowLeft, Download, ChevronDown, ChevronUp, Loader2, BarChart3 } from 'lucide-react';
 
 function StatusBadge({ status }) {
   const map = {
@@ -70,6 +70,12 @@ export default function ResponsesPage({ token }) {
             <option value="started">Em andamento</option>
             <option value="abandoned">Abandonados</option>
           </select>
+          <Link
+            to={`/admin/quizzes/${id}/evaluation`}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand/15 text-brand text-sm font-semibold hover:bg-brand/25 transition-colors"
+          >
+            <BarChart3 size={15} /> Avaliação
+          </Link>
           <a
             href={`/api/admin/quizzes/${id}/export`}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-800 text-zinc-300 text-sm font-semibold hover:bg-zinc-700 transition-colors"

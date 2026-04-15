@@ -303,7 +303,12 @@ app.get('/api/admin/quizzes/:id/questions', authMiddleware, async (req, res) => 
     const questions = await sql`
       SELECT * FROM questions WHERE quiz_id = ${req.params.id} ORDER BY order_key ASC
     `;
-    res.json(questions);
+    res.json(questions.map(q => ({
+      ...q,
+      options:      parseJsonField(q.options),
+      config:       parseJsonField(q.config),
+      branch_rules: parseJsonField(q.branch_rules) ?? [],
+    })));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

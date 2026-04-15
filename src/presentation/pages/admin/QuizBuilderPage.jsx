@@ -17,6 +17,7 @@ import { slugify } from '../../../core/entities/Quiz';
 import { getAvailableTypes } from '../../components/question-types/QuestionFactory';
 import { calcOrderKey } from '../../../core/entities/Question';
 import { QuizPlayer } from '../../components/QuizPlayer';
+import { RichTextEditor } from '../../components/RichTextEditor';
 
 // ---------------------------------------------------------------------------
 // SortableQuestion — item arrastável na lista
@@ -30,7 +31,7 @@ function SortableQuestion({ question, isExpanded, onToggle, onUpdate, onDelete }
     opacity: isDragging ? 0.4 : 1,
   };
 
-  const options = question.options || [];
+  const options = Array.isArray(question.options) ? question.options : [];
 
   return (
     <div
@@ -89,14 +90,34 @@ function SortableQuestion({ question, isExpanded, onToggle, onUpdate, onDelete }
           </div>
 
           <div>
-            <label className="text-xs text-zinc-400 font-semibold mb-1 block">Descrição</label>
-            <input
+            <label className="text-xs text-zinc-400 font-semibold mb-1 block">
+              {question.type === 'welcome' ? 'Subtítulo (rich text — aparece acima do logo)' : 'Descrição (rich text)'}
+            </label>
+            <RichTextEditor
               value={question.description || ''}
-              onChange={e => onUpdate({ description: e.target.value })}
-              placeholder="Texto explicativo (opcional)"
-              className="w-full px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-sm outline-none focus:border-brand transition-colors"
+              onChange={val => onUpdate({ description: val })}
+              placeholder={
+                question.type === 'welcome'
+                  ? '[yellow]Abril/Maio — Lagoinha Arapiraca[/yellow]'
+                  : 'Texto explicativo (opcional) — suporta **negrito** e [yellow]cores[/yellow]'
+              }
+              rows={question.type === 'welcome' ? 2 : 3}
             />
           </div>
+
+          {question.type === 'welcome' && (
+            <div>
+              <label className="text-xs text-zinc-400 font-semibold mb-1 block">
+                Corpo do card (rich text — aparece no card branco)
+              </label>
+              <RichTextEditor
+                value={question.placeholder || ''}
+                onChange={val => onUpdate({ placeholder: val })}
+                placeholder={'**Família, graça e paz! 👐**\n\nTexto normal aqui.\n\n[yellow]Leva menos de 2 minutos 🙏[/yellow]\n\n**Contamos com você!**'}
+                rows={7}
+              />
+            </div>
+          )}
 
           {['text', 'longtext'].includes(question.type) && (
             <div>
